@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistema Integrado - Restaurante</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- SDK do Supabase via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
 
@@ -34,23 +36,15 @@
         <input type="number" id="garcom-mesa" placeholder="Ex: 05" class="w-full border border-gray-300 rounded-lg p-3 text-lg font-bold text-center focus:ring-2 focus:ring-indigo-500 outline-none">
       </div>
 
-      <!-- Filtro de Categoria -->
-      <div id="garcom-categorias" class="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-        <!-- Injetado via JS -->
-      </div>
+      <div id="garcom-categorias" class="flex gap-2 overflow-x-auto pb-2 scrollbar-none"></div>
+      <div id="garcom-produtos" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
 
-      <!-- Grid de Produtos -->
-      <div id="garcom-produtos" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <!-- Injetado via JS -->
-      </div>
-
-      <!-- Resumo do Pedido Atual -->
       <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 space-y-3">
         <h3 class="font-bold text-gray-700 border-b pb-2">Itens Selecionados</h3>
         <div id="garcom-carrinho-itens" class="space-y-2 text-sm text-gray-700">
           <p class="text-gray-400 text-center py-2">Nenhum item selecionado</p>
         </div>
-        <textarea id="garcom-obs" placeholder="Observações do pedido (ex: Sem cebola, carne bem passada)..." class="w-full border rounded-lg p-2 text-xs text-gray-600 resize-none h-16 mt-2"></textarea>
+        <textarea id="garcom-obs" placeholder="Observações do pedido (ex: Sem cebola)..." class="w-full border rounded-lg p-2 text-xs text-gray-600 resize-none h-16 mt-2"></textarea>
       </div>
 
       <div class="bg-white border rounded-xl p-4 shadow-lg flex justify-between items-center gap-4">
@@ -64,7 +58,6 @@
       </div>
     </section>
 
-
     <!-- ================= TELA: COZINHA ================= -->
     <section id="tab-cozinha" class="hidden space-y-6">
       <header class="flex justify-between items-center border-b border-gray-300 pb-4">
@@ -73,31 +66,21 @@
           <span class="bg-amber-100 text-amber-800 border border-amber-300 px-3 py-1 rounded-lg" id="cozinha-pendentes-count">Pendentes: 0</span>
         </div>
       </header>
-
-      <div id="cozinha-pedidos-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <!-- Pedidos injetados via JS -->
-      </div>
+      <div id="cozinha-pedidos-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
     </section>
-
 
     <!-- ================= TELA: CAIXA ================= -->
     <section id="tab-caixa" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Lista de Mesas Ocupadas -->
       <div class="lg:col-span-1 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
         <h2 class="font-bold text-gray-800 text-lg mb-4">Mesas Com Pedidos</h2>
-        <div id="caixa-mesas-list" class="grid grid-cols-2 gap-3">
-          <!-- Mesas injetadas via JS -->
-        </div>
+        <div id="caixa-mesas-list" class="grid grid-cols-2 gap-3"></div>
       </div>
-
-      <!-- Detalhamento e Pagamento -->
       <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
         <div id="caixa-detalhe-container">
           <p class="text-gray-400 text-center py-10">Selecione uma mesa para visualizar a conta.</p>
         </div>
       </div>
     </section>
-
 
     <!-- ================= TELA: FATURAMENTO ================= -->
     <section id="tab-faturamento" class="hidden space-y-6 max-w-5xl mx-auto">
@@ -106,7 +89,6 @@
         <p class="text-xs text-gray-500 mt-1">Resumo das comandas finalizadas no caixa hoje.</p>
       </header>
 
-      <!-- Cards de Métricas -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
           <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Faturamento Total</p>
@@ -122,7 +104,6 @@
         </div>
       </div>
 
-      <!-- Tabela do Histórico de Comandas Fechadas -->
       <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
         <h3 class="text-md font-bold text-gray-800 mb-4">Histórico de Mesas Fechadas</h3>
         <div class="overflow-x-auto">
@@ -136,14 +117,11 @@
                 <th class="pb-2 text-right">Total Pago</th>
               </tr>
             </thead>
-            <tbody id="fat-tabela-historico" class="divide-y text-gray-700">
-              <!-- Injetado via JS -->
-            </tbody>
+            <tbody id="fat-tabela-historico" class="divide-y text-gray-700"></tbody>
           </table>
         </div>
       </div>
     </section>
-
 
     <!-- ================= TELA: CADASTRO DE PRODUTOS ================= -->
     <section id="tab-produtos" class="hidden max-w-4xl mx-auto space-y-6">
@@ -175,7 +153,6 @@
         </form>
       </div>
 
-      <!-- Tabela de Produtos -->
       <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
         <h3 class="text-md font-bold text-gray-800 mb-4">Produtos Cadastrados</h3>
         <div class="overflow-x-auto">
@@ -188,9 +165,7 @@
                 <th class="pb-2 text-center">Ações</th>
               </tr>
             </thead>
-            <tbody id="tabela-produtos" class="divide-y text-gray-700">
-              <!-- Injetado via JS -->
-            </tbody>
+            <tbody id="tabela-produtos" class="divide-y text-gray-700"></tbody>
           </table>
         </div>
       </div>
@@ -199,23 +174,50 @@
   </main>
 
   <script>
-    // --- DADOS INICIAIS DA APLICAÇÃO ---
-    const PRODUTOS_PADRAO = [
-      { id: 1, nome: 'Hambúrguer Artesanal', preco: 35.00, categoria: 'Pratos' },
-      { id: 2, nome: 'Batata Frita G', preco: 20.00, categoria: 'Porções' },
-      { id: 3, nome: 'Coca-Cola 350ml', preco: 6.00, categoria: 'Bebidas' },
-      { id: 4, nome: 'Picanha na Chapa', preco: 65.00, categoria: 'Pratos' }
-    ];
+    // --- CONFIGURAÇÃO SUPABASE ---
+    const SUPABASE_URL = 'SUA_SUPABASE_URL_AQUI';
+    const SUPABASE_KEY = 'SUA_SUPABASE_ANON_KEY_AQUI';
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let produtos = JSON.parse(localStorage.getItem('restaurante_produtos')) || PRODUTOS_PADRAO;
-    let comandas = JSON.parse(localStorage.getItem('restaurante_comandas')) || [];
-
+    let produtos = [];
+    let comandas = [];
     let carrinhoAtual = [];
     let categoriaAtivaGarcom = 'Todos';
     let mesaSelecionadaCaixa = null;
 
-    // --- GERENCIAMENTO DE NAVEGAÇÃO ---
-    function switchTab(tab) {
+    // BANCO DE DADOS - CARREGAMENTO INICIAL
+    async function carregarDados() {
+      await Promise.all([buscarProdutos(), buscarComandas()]);
+      renderGarcom();
+    }
+
+    async function buscarProdutos() {
+      const { data, error } = await db.from('produtos').select('*').order('nome');
+      if (!error) produtos = data || [];
+    }
+
+    async function buscarComandas() {
+      const { data, error } = await db.from('comandas').select('*, pedidos(*)');
+      if (!error) {
+        comandas = (data || []).map(c => ({
+          id: c.id,
+          mesa: c.mesa,
+          status: c.status,
+          horaAbertura: c.hora_abertura,
+          horaFechamento: c.hora_fechamento,
+          pedidos: (c.pedidos || []).map(p => ({
+            idPedido: p.id,
+            itens: p.itens,
+            obs: p.obs,
+            statusPreparo: p.status_preparo,
+            hora: p.hora
+          }))
+        }));
+      }
+    }
+
+    // --- NAVEGAÇÃO ---
+    async function switchTab(tab) {
       ['garcom', 'cozinha', 'caixa', 'faturamento', 'produtos'].forEach(t => {
         document.getElementById(`tab-${t}`).classList.add('hidden');
         document.getElementById(`nav-${t}`).className = "px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition";
@@ -224,6 +226,8 @@
       document.getElementById(`tab-${tab}`).classList.remove('hidden');
       document.getElementById(`nav-${tab}`).className = "px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 transition";
 
+      await carregarDados();
+
       if (tab === 'garcom') renderGarcom();
       if (tab === 'cozinha') renderCozinha();
       if (tab === 'caixa') renderCaixa();
@@ -231,28 +235,29 @@
       if (tab === 'produtos') renderProdutosTable();
     }
 
-    function salvarStorage() {
-      localStorage.setItem('restaurante_produtos', JSON.stringify(produtos));
-      localStorage.setItem('restaurante_comandas', JSON.stringify(comandas));
-    }
-
-    // --- TELA: PRODUTOS ---
-    function salvarProduto(e) {
+    // --- PRODUTOS ---
+    async function salvarProduto(e) {
       e.preventDefault();
       const nome = document.getElementById('prod-nome').value;
       const preco = parseFloat(document.getElementById('prod-preco').value);
       const categoria = document.getElementById('prod-categoria').value;
 
-      produtos.push({ id: Date.now(), nome, preco, categoria });
-      salvarStorage();
-      e.target.reset();
-      renderProdutosTable();
+      const novoProduto = { id: Date.now(), nome, preco, categoria };
+      const { error } = await db.from('produtos').insert([novoProduto]);
+
+      if (!error) {
+        e.target.reset();
+        await buscarProdutos();
+        renderProdutosTable();
+      }
     }
 
-    function removerProduto(id) {
-      produtos = produtos.filter(p => p.id !== id);
-      salvarStorage();
-      renderProdutosTable();
+    async function removerProduto(id) {
+      const { error } = await db.from('produtos').delete().eq('id', id);
+      if (!error) {
+        await buscarProdutos();
+        renderProdutosTable();
+      }
     }
 
     function renderProdutosTable() {
@@ -261,7 +266,7 @@
         <tr>
           <td class="py-2.5 font-medium">${p.nome}</td>
           <td class="py-2.5 text-gray-500">${p.categoria}</td>
-          <td class="py-2.5 text-right font-bold">R$ ${p.preco.toFixed(2).replace('.', ',')}</td>
+          <td class="py-2.5 text-right font-bold">R$ ${Number(p.preco).toFixed(2).replace('.', ',')}</td>
           <td class="py-2.5 text-center">
             <button onclick="removerProduto(${p.id})" class="text-red-600 hover:text-red-800 font-semibold text-xs">Excluir</button>
           </td>
@@ -269,7 +274,7 @@
       `).join('');
     }
 
-    // --- TELA: GARÇOM ---
+    // --- GARÇOM ---
     function renderGarcom() {
       const categorias = ['Todos', ...new Set(produtos.map(p => p.categoria))];
       document.getElementById('garcom-categorias').innerHTML = categorias.map(c => `
@@ -283,7 +288,7 @@
         <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
           <div>
             <h3 class="font-bold text-gray-800">${p.nome}</h3>
-            <p class="text-indigo-600 font-semibold text-sm mt-1">R$ ${p.preco.toFixed(2).replace('.', ',')}</p>
+            <p class="text-indigo-600 font-semibold text-sm mt-1">R$ ${Number(p.preco).toFixed(2).replace('.', ',')}</p>
           </div>
           <button onclick="adicionarAoCarrinho(${p.id})" class="mt-3 bg-indigo-50 text-indigo-600 font-bold py-2 rounded-lg text-sm hover:bg-indigo-100 transition">
             + Adicionar
@@ -333,44 +338,45 @@
       document.getElementById('garcom-total').innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
     }
 
-    function enviarPedidoCozinha() {
+    async function enviarPedidoCozinha() {
       const mesaInput = document.getElementById('garcom-mesa').value;
       if (!mesaInput) return alert('Informe o número da mesa!');
       if (carrinhoAtual.length === 0) return alert('Selecione ao menos um produto!');
 
       const mesaNum = String(mesaInput).padStart(2, '0');
       const obs = document.getElementById('garcom-obs').value;
+      const horaAtual = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
       let comandaMesa = comandas.find(c => c.mesa === mesaNum && c.status === 'aberta');
+      let comandaId = comandaMesa ? comandaMesa.id : Date.now();
 
       if (!comandaMesa) {
-        comandaMesa = {
-          id: Date.now(),
+        await db.from('comandas').insert([{
+          id: comandaId,
           mesa: mesaNum,
           status: 'aberta',
-          horaAbertura: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          pedidos: []
-        };
-        comandas.push(comandaMesa);
+          hora_abertura: horaAtual
+        }]);
       }
 
-      comandaMesa.pedidos.push({
-        idPedido: Date.now(),
-        itens: [...carrinhoAtual],
+      await db.from('pedidos').insert([{
+        id: Date.now(),
+        comanda_id: comandaId,
+        itens: carrinhoAtual,
         obs: obs,
-        statusPreparo: 'Pendente',
-        hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      });
+        status_preparo: 'Pendente',
+        hora: horaAtual
+      }]);
 
-      salvarStorage();
       carrinhoAtual = [];
       document.getElementById('garcom-obs').value = '';
       document.getElementById('garcom-mesa').value = '';
       renderCarrinho();
+      await carregarDados();
       alert(`Pedido enviado para a Mesa ${mesaNum}!`);
     }
 
-    // --- TELA: COZINHA ---
+    // --- COZINHA ---
     function renderCozinha() {
       const grid = document.getElementById('cozinha-pedidos-grid');
       let pendentesCount = 0;
@@ -397,7 +403,7 @@
                 </div>
               </div>
               <div class="p-3 bg-gray-50 border-t">
-                <button onclick="alternarStatusPreparo(${comanda.id}, ${pedido.idPedido})" class="w-full ${pedido.statusPreparo === 'Pendente' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-gray-600 hover:bg-gray-700'} text-white font-bold py-2.5 rounded-lg transition">
+                <button onclick="alternarStatusPreparo(${pedido.idPedido}, '${pedido.statusPreparo}')" class="w-full ${pedido.statusPreparo === 'Pendente' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-gray-600 hover:bg-gray-700'} text-white font-bold py-2.5 rounded-lg transition">
                   ${pedido.statusPreparo === 'Pendente' ? 'Marcar como Pronto' : 'Reabrir Preparo'}
                 </button>
               </div>
@@ -410,19 +416,16 @@
       grid.innerHTML = html || `<p class="text-gray-500 col-span-full text-center py-10">Nenhum pedido na cozinha no momento.</p>`;
     }
 
-    function alternarStatusPreparo(comandaId, pedidoId) {
-      const comanda = comandas.find(c => c.id === comandaId);
-      if (comanda) {
-        const pedido = comanda.pedidos.find(p => p.idPedido === pedidoId);
-        if (pedido) {
-          pedido.statusPreparo = pedido.statusPreparo === 'Pendente' ? 'Pronto' : 'Pendente';
-          salvarStorage();
-          renderCozinha();
-        }
+    async function alternarStatusPreparo(pedidoId, statusAtual) {
+      const novoStatus = statusAtual === 'Pendente' ? 'Pronto' : 'Pendente';
+      const { error } = await db.from('pedidos').update({ status_preparo: novoStatus }).eq('id', pedidoId);
+      if (!error) {
+        await carregarDados();
+        renderCozinha();
       }
     }
 
-    // --- TELA: CAIXA ---
+    // --- CAIXA ---
     function renderCaixa() {
       const mesasContainer = document.getElementById('caixa-mesas-list');
       const comandasAbertas = comandas.filter(c => c.status === 'aberta');
@@ -492,7 +495,7 @@
               <tr>
                 <td class="py-2.5 font-medium">${i.nome}</td>
                 <td class="py-2.5 text-center">${i.qtd}</td>
-                <td class="py-2.5 text-right">R$ ${i.preco.toFixed(2).replace('.', ',')}</td>
+                <td class="py-2.5 text-right">R$ ${Number(i.preco).toFixed(2).replace('.', ',')}</td>
                 <td class="py-2.5 text-right font-bold">R$ ${(i.preco * i.qtd).toFixed(2).replace('.', ',')}</td>
               </tr>
             `).join('')}
@@ -522,31 +525,32 @@
       `;
     }
 
-    function fecharMesa(comandaId) {
-      const comanda = comandas.find(c => c.id === comandaId);
-      if (comanda) {
-        comanda.status = 'fechada';
-        comanda.horaFechamento = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        salvarStorage();
+    async function fecharMesa(comandaId) {
+      const horaFechamento = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const { error } = await db.from('comandas').update({ status: 'fechada', hora_fechamento: horaFechamento }).eq('id', comandaId);
+
+      if (!error) {
         mesaSelecionadaCaixa = null;
+        await carregarDados();
         renderCaixa();
         alert('Mesa fechada com sucesso!');
       }
     }
 
-    function cancelarComanda(comandaId) {
+    async function cancelarComanda(comandaId) {
       if (confirm('Tem certeza que deseja cancelar essa conta?')) {
-        comandas = comandas.filter(c => c.id !== comandaId);
-        salvarStorage();
-        mesaSelecionadaCaixa = null;
-        renderCaixa();
+        const { error } = await db.from('comandas').delete().eq('id', comandaId);
+        if (!error) {
+          mesaSelecionadaCaixa = null;
+          await carregarDados();
+          renderCaixa();
+        }
       }
     }
 
-    // --- TELA: FATURAMENTO ---
+    // --- FATURAMENTO ---
     function renderFaturamento() {
       const comandasFechadas = comandas.filter(c => c.status === 'fechada');
-
       let faturamentoTotal = 0;
       let historicoHtml = '';
 
@@ -556,7 +560,6 @@
 
         const taxaServico = subtotalMesa * 0.10;
         const totalPago = subtotalMesa + taxaServico;
-
         faturamentoTotal += totalPago;
 
         historicoHtml += `
@@ -576,16 +579,15 @@
       document.getElementById('fat-total-dia').innerText = `R$ ${faturamentoTotal.toFixed(2).replace('.', ',')}`;
       document.getElementById('fat-mesas-count').innerText = totalMesas;
       document.getElementById('fat-ticket-medio').innerText = `R$ ${ticketMedio.toFixed(2).replace('.', ',')}`;
-
       document.getElementById('fat-tabela-historico').innerHTML = historicoHtml || `
         <tr>
-          <td colspan="5" class="py-8 text-center text-gray-400">Nenhuma mesa encerrada no dia até o momento.</td>
+          <td colspan="5" class="py-8 text-center text-gray-400">Nenhuma mesa encerrada até o momento.</td>
         </tr>
       `;
     }
 
-    // Inicialização
-    renderGarcom();
+    // Inicialização ao carregar a página
+    carregarDados();
   </script>
 </body>
 </html>
