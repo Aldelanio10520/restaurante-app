@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistema Integrado - Restaurante</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
 
@@ -199,20 +202,56 @@
   </main>
 
   <script>
-    // --- DADOS INICIAIS DA APLICAÇÃO ---
-    const PRODUTOS_PADRAO = [
-      { id: 1, nome: 'Hambúrguer Artesanal', preco: 35.00, categoria: 'Pratos' },
-      { id: 2, nome: 'Batata Frita G', preco: 20.00, categoria: 'Porções' },
-      { id: 3, nome: 'Coca-Cola 350ml', preco: 6.00, categoria: 'Bebidas' },
-      { id: 4, nome: 'Picanha na Chapa', preco: 65.00, categoria: 'Pratos' }
-    ];
+    // --- CONFIGURAÇÃO DO SUPABASE ---
+    const SUPABASE_URL = "SUA_URL_DO_SUPABASE_AQUI";
+    const SUPABASE_KEY = "SUA_CHAVE_ANON_PUBLIC_AQUI";
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let produtos = JSON.parse(localStorage.getItem('restaurante_produtos')) || PRODUTOS_PADRAO;
-    let comandas = JSON.parse(localStorage.getItem('restaurante_comandas')) || [];
-
+    let produtos = [];
+    let comandas = [];
     let carrinhoAtual = [];
     let categoriaAtivaGarcom = 'Todos';
     let mesaSelecionadaCaixa = null;
+
+    // --- CARREGAR DADOS DO SUPABASE ---
+    async function carregarDados() {
+      try {
+        // Busca produtos
+        const { data: prodData, error: prodErr } = await db.from('produtos').select('*').order('id', { ascending: true });
+        if (prodErr) console.error('Erro produtos:', prodErr);
+        else produtos = prodData || [];
+
+        // Busca comandas e pedidos
+        const { data: comData, error: comErr } = await db.from('comandas').select('*');
+        if (comErr) console.error('Erro comandas:', comErr);
+
+        const { data: pedData, error: pedErr } = await db.from('pedidos').select('*');
+        if (pedErr) console.error('Erro pedidos:', pedErr);
+
+        if (comData) {
+          comandas = comData.map(c => ({
+            id: Number(c.id),
+            mesa: c.mesa,
+            status: c.status,
+            horaAbertura: c.hora_abertura,
+            horaFechamento: c.hora_fechamento,
+            pedidos: (pedData || [])
+              .filter(p => Number(p.comanda_id) === Number(c.id))
+              .map(p => ({
+                idPedido: Number(p.id),
+                itens: p.itens,
+                obs: p.obs,
+                statusPreparo: p.status_preparo,
+                hora: p.hora
+              }))
+          }));
+        }
+
+        renderGarcom();
+      } catch (err) {
+        console.error('Falha ao conectar com o Supabase:', err);
+      }
+    }
 
     // --- GERENCIAMENTO DE NAVEGAÇÃO ---
     function switchTab(tab) {
@@ -231,27 +270,38 @@
       if (tab === 'produtos') renderProdutosTable();
     }
 
-    function salvarStorage() {
-      localStorage.setItem('restaurante_produtos', JSON.stringify(produtos));
-      localStorage.setItem('restaurante_comandas', JSON.stringify(comandas));
-    }
-
-    // --- TELA: PRODUTOS ---
-    function salvarProduto(e) {
+    // --- PRODUTOS ---
+    async function salvarProduto(e) {
       e.preventDefault();
       const nome = document.getElementById('prod-nome').value;
       const preco = parseFloat(document.getElementById('prod-preco').value);
       const categoria = document.getElementById('prod-categoria').value;
+      const novoId = Date.now();
 
-      produtos.push({ id: Date.now(), nome, preco, categoria });
-      salvarStorage();
+      const { error } = await db.from('produtos').insert([{
+        id: novoId,
+        nome: nome,
+        preco: preco,
+        categoria: categoria
+      }]);
+
+      if (error) {
+        alert('Erro ao salvar produto no Supabase: ' + error.message);
+        return;
+      }
+
       e.target.reset();
+      await carregarDados();
       renderProdutosTable();
     }
 
-    function removerProduto(id) {
-      produtos = produtos.filter(p => p.id !== id);
-      salvarStorage();
+    async function removerProduto(id) {
+      const { error } = await db.from('produtos').delete().eq('id', id);
+      if (error) {
+        alert('Erro ao excluir produto: ' + error.message);
+        return;
+      }
+      await carregarDados();
       renderProdutosTable();
     }
 
@@ -261,7 +311,7 @@
         <tr>
           <td class="py-2.5 font-medium">${p.nome}</td>
           <td class="py-2.5 text-gray-500">${p.categoria}</td>
-          <td class="py-2.5 text-right font-bold">R$ ${p.preco.toFixed(2).replace('.', ',')}</td>
+          <td class="py-2.5 text-right font-bold">R$ ${Number(p.preco).toFixed(2).replace('.', ',')}</td>
           <td class="py-2.5 text-center">
             <button onclick="removerProduto(${p.id})" class="text-red-600 hover:text-red-800 font-semibold text-xs">Excluir</button>
           </td>
@@ -269,7 +319,7 @@
       `).join('');
     }
 
-    // --- TELA: GARÇOM ---
+    // --- GARÇOM & PEDIDOS ---
     function renderGarcom() {
       const categorias = ['Todos', ...new Set(produtos.map(p => p.categoria))];
       document.getElementById('garcom-categorias').innerHTML = categorias.map(c => `
@@ -283,7 +333,7 @@
         <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
           <div>
             <h3 class="font-bold text-gray-800">${p.nome}</h3>
-            <p class="text-indigo-600 font-semibold text-sm mt-1">R$ ${p.preco.toFixed(2).replace('.', ',')}</p>
+            <p class="text-indigo-600 font-semibold text-sm mt-1">R$ ${Number(p.preco).toFixed(2).replace('.', ',')}</p>
           </div>
           <button onclick="adicionarAoCarrinho(${p.id})" class="mt-3 bg-indigo-50 text-indigo-600 font-bold py-2 rounded-lg text-sm hover:bg-indigo-100 transition">
             + Adicionar
@@ -300,8 +350,8 @@
     }
 
     function adicionarAoCarrinho(id) {
-      const prod = produtos.find(p => p.id === id);
-      const itemExistente = carrinhoAtual.find(i => i.id === id);
+      const prod = produtos.find(p => Number(p.id) === Number(id));
+      const itemExistente = carrinhoAtual.find(i => Number(i.id) === Number(id));
 
       if (itemExistente) {
         itemExistente.qtd += 1;
@@ -333,44 +383,53 @@
       document.getElementById('garcom-total').innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
     }
 
-    function enviarPedidoCozinha() {
+    async function enviarPedidoCozinha() {
       const mesaInput = document.getElementById('garcom-mesa').value;
       if (!mesaInput) return alert('Informe o número da mesa!');
       if (carrinhoAtual.length === 0) return alert('Selecione ao menos um produto!');
 
       const mesaNum = String(mesaInput).padStart(2, '0');
       const obs = document.getElementById('garcom-obs').value;
+      const horaAtual = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
       let comandaMesa = comandas.find(c => c.mesa === mesaNum && c.status === 'aberta');
+      let comandaId = comandaMesa ? comandaMesa.id : Date.now();
 
       if (!comandaMesa) {
-        comandaMesa = {
-          id: Date.now(),
+        const { error: errComanda } = await db.from('comandas').insert([{
+          id: comandaId,
           mesa: mesaNum,
           status: 'aberta',
-          horaAbertura: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          pedidos: []
-        };
-        comandas.push(comandaMesa);
+          hora_abertura: horaAtual
+        }]);
+
+        if (errComanda) {
+          return alert('Erro ao criar comanda no Supabase: ' + errComanda.message);
+        }
       }
 
-      comandaMesa.pedidos.push({
-        idPedido: Date.now(),
-        itens: [...carrinhoAtual],
+      const { error: errPedido } = await db.from('pedidos').insert([{
+        id: Date.now(),
+        comanda_id: comandaId,
+        itens: carrinhoAtual,
         obs: obs,
-        statusPreparo: 'Pendente',
-        hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      });
+        status_preparo: 'Pendente',
+        hora: horaAtual
+      }]);
 
-      salvarStorage();
+      if (errPedido) {
+        return alert('Erro ao salvar pedido no Supabase: ' + errPedido.message);
+      }
+
       carrinhoAtual = [];
       document.getElementById('garcom-obs').value = '';
       document.getElementById('garcom-mesa').value = '';
       renderCarrinho();
+      await carregarDados();
       alert(`Pedido enviado para a Mesa ${mesaNum}!`);
     }
 
-    // --- TELA: COZINHA ---
+    // --- COZINHA ---
     function renderCozinha() {
       const grid = document.getElementById('cozinha-pedidos-grid');
       let pendentesCount = 0;
@@ -397,7 +456,7 @@
                 </div>
               </div>
               <div class="p-3 bg-gray-50 border-t">
-                <button onclick="alternarStatusPreparo(${comanda.id}, ${pedido.idPedido})" class="w-full ${pedido.statusPreparo === 'Pendente' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-gray-600 hover:bg-gray-700'} text-white font-bold py-2.5 rounded-lg transition">
+                <button onclick="alternarStatusPreparo(${pedido.idPedido}, '${pedido.statusPreparo}')" class="w-full ${pedido.statusPreparo === 'Pendente' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-gray-600 hover:bg-gray-700'} text-white font-bold py-2.5 rounded-lg transition">
                   ${pedido.statusPreparo === 'Pendente' ? 'Marcar como Pronto' : 'Reabrir Preparo'}
                 </button>
               </div>
@@ -410,19 +469,18 @@
       grid.innerHTML = html || `<p class="text-gray-500 col-span-full text-center py-10">Nenhum pedido na cozinha no momento.</p>`;
     }
 
-    function alternarStatusPreparo(comandaId, pedidoId) {
-      const comanda = comandas.find(c => c.id === comandaId);
-      if (comanda) {
-        const pedido = comanda.pedidos.find(p => p.idPedido === pedidoId);
-        if (pedido) {
-          pedido.statusPreparo = pedido.statusPreparo === 'Pendente' ? 'Pronto' : 'Pendente';
-          salvarStorage();
-          renderCozinha();
-        }
+    async function alternarStatusPreparo(pedidoId, statusAtual) {
+      const novoStatus = statusAtual === 'Pendente' ? 'Pronto' : 'Pendente';
+      const { error } = await db.from('pedidos').update({ status_preparo: novoStatus }).eq('id', pedidoId);
+      if (error) {
+        alert('Erro ao atualizar status: ' + error.message);
+        return;
       }
+      await carregarDados();
+      renderCozinha();
     }
 
-    // --- TELA: CAIXA ---
+    // --- CAIXA ---
     function renderCaixa() {
       const mesasContainer = document.getElementById('caixa-mesas-list');
       const comandasAbertas = comandas.filter(c => c.status === 'aberta');
@@ -492,7 +550,7 @@
               <tr>
                 <td class="py-2.5 font-medium">${i.nome}</td>
                 <td class="py-2.5 text-center">${i.qtd}</td>
-                <td class="py-2.5 text-right">R$ ${i.preco.toFixed(2).replace('.', ',')}</td>
+                <td class="py-2.5 text-right">R$ ${Number(i.preco).toFixed(2).replace('.', ',')}</td>
                 <td class="py-2.5 text-right font-bold">R$ ${(i.preco * i.qtd).toFixed(2).replace('.', ',')}</td>
               </tr>
             `).join('')}
@@ -522,28 +580,35 @@
       `;
     }
 
-    function fecharMesa(comandaId) {
-      const comanda = comandas.find(c => c.id === comandaId);
-      if (comanda) {
-        comanda.status = 'fechada';
-        comanda.horaFechamento = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        salvarStorage();
-        mesaSelecionadaCaixa = null;
-        renderCaixa();
-        alert('Mesa fechada com sucesso!');
+    async function fecharMesa(comandaId) {
+      const horaFechamento = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const { error } = await db.from('comandas').update({ status: 'fechada', hora_fechamento: horaFechamento }).eq('id', comandaId);
+
+      if (error) {
+        alert('Erro ao fechar mesa: ' + error.message);
+        return;
       }
+
+      mesaSelecionadaCaixa = null;
+      await carregarDados();
+      renderCaixa();
+      alert('Mesa fechada com sucesso!');
     }
 
-    function cancelarComanda(comandaId) {
+    async function cancelarComanda(comandaId) {
       if (confirm('Tem certeza que deseja cancelar essa conta?')) {
-        comandas = comandas.filter(c => c.id !== comandaId);
-        salvarStorage();
+        const { error } = await db.from('comandas').delete().eq('id', comandaId);
+        if (error) {
+          alert('Erro ao cancelar comanda: ' + error.message);
+          return;
+        }
         mesaSelecionadaCaixa = null;
+        await carregarDados();
         renderCaixa();
       }
     }
 
-    // --- TELA: FATURAMENTO ---
+    // --- FATURAMENTO ---
     function renderFaturamento() {
       const comandasFechadas = comandas.filter(c => c.status === 'fechada');
 
@@ -584,8 +649,8 @@
       `;
     }
 
-    // Inicialização
-    renderGarcom();
+    // Carregamento inicial das informações a partir do Supabase
+    carregarDados();
   </script>
 </body>
 </html>
